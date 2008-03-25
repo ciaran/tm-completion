@@ -88,7 +88,7 @@ if line =~ /(\$\w+)->(\w*)/
 
   methods = methods.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
 
-  if ENV['DIALOG'] =~ /2$/ or methods.size == 1
+  if ENV['DIALOG'] !~ /2$/ or methods.size == 1
     if methods.size == 1
       choice = 0
     else
