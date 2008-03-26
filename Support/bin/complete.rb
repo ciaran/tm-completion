@@ -38,6 +38,17 @@ def functions_in_class_beginning_with(klass, prefix)
   functions
 end
 
+def functions_beginning_with(prefix)
+  functions = []
+  if ENV['TM_FILEPATH']
+    functions += run_query("SELECT * FROM functions WHERE class = '' AND name LIKE '#{prefix}%' AND file != '#{e_sql ENV['TM_FILEPATH'].project_relative_path}';")
+  end
+  if @current_file[:functions]
+    functions += @current_file[:functions].select { |f| f['name'].begins_with? prefix and f['class'] == '' }
+  end
+  functions
+end
+
 def snippet_for_method(method)
   prototype = method['prototype']
 
@@ -76,9 +87,10 @@ def snippet_for_method(method)
   snippet + ')$0'
 end
 
+methods = []
+
 if line =~ /(\$\w+)->(\w*)/
   prefix = $2.to_s
-  methods = []
   variables_named($1).each do |variable|
     functions_in_class_beginning_with(variable['class'], prefix).each do |method|
       methods << method unless [variable['class'], '__construct'].include? method['name']
@@ -87,21 +99,28 @@ if line =~ /(\$\w+)->(\w*)/
   TextMate::exit_show_tool_tip "No methods found" if methods.empty?
 
   methods = methods.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
-
-  if ENV['DIALOG'] !~ /2$/ or methods.size == 1
-    if methods.size == 1
-      choice = 0
-    else
-      abort unless choice = TextMate::UI.menu(methods.map { |m| m['name'] })
-    end
-    TextMate::exit_insert_snippet methods[choice]['name'][prefix.to_s.length..-1] + snippet_for_method(methods[choice])
-  else
-    IO.popen("\"$DIALOG\" popup -c #{e_sh prefix} -e _", 'w') do |io|
-      io << {'suggestions' => methods.map do |method|
-        {'title' => method['name'], 'snippet' => snippet_for_method(method)}
-      end}.to_plist
-    end
-  end
 else
-  TextMate::exit_show_tool_tip 'Place your cursor on a method call'
+  line = line[0..ENV['TM_LINE_INDEX'].to_i]
+  line =~ /\b(\w*)$/
+  prefix = $1.to_s
+
+  functions_beginning_with(prefix).each do |method|
+    methods << method
+  end
+  TextMate::exit_show_tool_tip "No functions found" if methods.empty?
+end
+
+if ENV['DIALOG'] !~ /2$/ or methods.size == 1
+  if methods.size == 1
+    choice = 0
+  else
+    abort unless choice = TextMate::UI.menu(methods.map { |m| m['name'] })
+  end
+  TextMate::exit_insert_snippet methods[choice]['name'][prefix.to_s.length..-1] + snippet_for_method(methods[choice])
+else
+  IO.popen("\"$DIALOG\" popup -c #{e_sh prefix} -e _ -i", 'w') do |io|
+    io << {'suggestions' => methods.map do |method|
+      {'title' => method['name'], 'snippet' => snippet_for_method(method)}
+    end}.to_plist
+  end
 end
