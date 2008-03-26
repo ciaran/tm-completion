@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby -wKU
 
 require File.dirname(__FILE__) + "/../lib/db"
+require ENV['TM_SUPPORT_PATH'] + '/lib/progress'
 
 ProjectPath = ARGV[0] + "/"
 DbPath      = ProjectPath + DatabaseFilename
@@ -42,11 +43,16 @@ if ARGV[1] # Single file
 
   puts "Done!"
 else
-  Dir['**/*.php'].each do |script|
-    next if script =~ /phpMyAdmin|adodb|tpl.php$/
-    update_database script, parse_file(script)
-  end
+  files = Dir['**/*.php']
 
-  
-  %x["$DIALOG_1" -e -p'{ messageTitle = "Done!"; informativeText = "Finished scanning #{ProjectPath}"; }']
+  TextMate.call_with_progress(:title =>'Scanning…', :summary => 'Scanning Project Files...', :indeterminate => false, :cancel => lambda {puts "Canceled!"; exit 0} ) do |dialog|
+    step = 100.0 / files.size.to_f
+    progress = 0
+    files.each do |script|
+      next if script =~ /phpMyAdmin|adodb|tpl.php$/
+      dialog.parameters = {'summary' => "Parsing #{script}", 'progressValue' => progress}
+      update_database script, parse_file(script)
+      progress += step
+    end
+  end
 end
