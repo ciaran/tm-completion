@@ -44,7 +44,7 @@ def functions_beginning_with(prefix)
     functions += run_query("SELECT * FROM functions WHERE class = '' AND name LIKE '#{prefix}%' AND file != '#{e_sql ENV['TM_FILEPATH'].project_relative_path}';")
   end
   if @current_file[:functions]
-    functions += @current_file[:functions].select { |f| f['name'].begins_with? prefix and f['class'] == '' }
+    functions += @current_file[:functions].select { |f| f['name'].begins_with? prefix and f['class'] == nil }
   end
   functions
 end
@@ -59,7 +59,8 @@ def snippet_for_method(method)
 
   params = '' if params == 'void'
 
-  tabstop = 0
+  tabstop          = 0
+  default_tabstops = 0
   snippet += params.scan(/(\w+ )?&?([\w.|]+)( = .+?)?(\])?(,|$)/).map do |(type, name, default, optional_bracket)|
     s = type.to_s + name
     optional = false
@@ -72,17 +73,21 @@ def snippet_for_method(method)
       s = '[' + s + default + ']'
       optional = true
     end
-    tabstop += 1
-    if tabstop > 1
-      if optional
-        "${#{tabstop}:, ${#{tabstop+=1}:#{s}}}"
-      else
-        ", ${#{tabstop}:#{s}}"
-      end
-    else
-      "${#{tabstop}:#{s}}"
+    r = ""
+    if optional
+      default_tabstops += 1
+      r << "${#{tabstop += 1}:"
     end
+    tabstop += 1
+    r << ", " if tabstop - default_tabstops > 1
+    if default_tabstops > 0 and tabstop - default_tabstops == 1
+      r << "#{s}"
+    else
+      r << "${#{tabstop}:#{s}}"
+    end
+    r
   end.join('')
+  snippet << "}" * default_tabstops
 
   snippet + ')$0'
 end
