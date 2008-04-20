@@ -55,7 +55,7 @@ end
 tokenList = []
 lexer.each do |token| 
   next unless token.is_a? Array
-  tokenList << Token.new(*token) unless [:whitespace].include? token[0]
+  tokenList << Token.new(*token)
 end
 
 in_php = false
@@ -68,6 +68,7 @@ variables   = {}
 block_depth = 0
 variable    = nil
 comment     = nil
+phpdoc      = ''
 
 tokenList.each do |token|
   if in_php
@@ -76,6 +77,8 @@ tokenList.each do |token|
         comment = nil
       elsif (comment == :block_comment_start or comment == :phpdoc_start) and token[:tt] == :block_comment_end
         comment = nil
+      elsif comment == :phpdoc_start
+        phpdoc << token[:text]
       end
     else
       case token[:tt]
@@ -84,8 +87,9 @@ tokenList.each do |token|
       when :close_block
         block_depth -= 1
         current_class = nil if current_class and block_depth == current_class[:depth]
-      when :line_comment, :block_comment_start
+      when :line_comment, :block_comment_start, :phpdoc_start
         comment = token[:tt]
+        phpdoc  = ''
       when :close_php
         in_php = false
       when :function
@@ -104,6 +108,10 @@ tokenList.each do |token|
         variable = token.text
       when :assignment
         # keep variable
+        if phpdoc.length > 0 and phpdoc =~ /@var\s+(\w+)/ and not %w[string array integer boolean].include?($1)
+          variables[variable] = $1
+          phpdoc              = ''
+        end
       when :new
         if variable
           token.text =~ /^new\s*(\w+)/
@@ -114,6 +122,8 @@ tokenList.each do |token|
         abort "Class regexp failed" unless $1
         current_class = {:name => $1, :depth => block_depth}
         classes[$1] = {:methods => {}}
+      when :whitespace
+        # Ignore
       else
         variable = nil
       end
