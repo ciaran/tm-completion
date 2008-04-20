@@ -4,7 +4,7 @@ require "stringio"
 require File.dirname(__FILE__) + "/../lib/db"
 require File.dirname(__FILE__) + "/../lib/lexer"
 
-file_path = ARGV[0] || "/Sites/quotes/includes/adodb/adodb.inc.php"
+file_path = ARGV[0] || "/Sites/quotes/includes/init.php"
 
 if file_path == '-'
   to_parse = STDIN
@@ -14,6 +14,7 @@ end
 
 lexer = Lexer.new do |l|
   l.add_token :line_comment,        %r{//|#}
+  l.add_token :phpdoc_start,        %r{/\*\*}
   l.add_token :block_comment_start, %r{/\*}
   l.add_token :block_comment_end,   %r{\*/}
   l.add_token :open_php,            /<\?(?:php\b)?/
@@ -73,7 +74,7 @@ tokenList.each do |token|
     if comment
       if comment == :line_comment and token[:tt] == :terminator
         comment = nil
-      elsif comment == :block_comment_start and token[:tt] = :block_comment_end
+      elsif (comment == :block_comment_start or comment == :phpdoc_start) and token[:tt] == :block_comment_end
         comment = nil
       end
     else
@@ -83,7 +84,7 @@ tokenList.each do |token|
       when :close_block
         block_depth -= 1
         current_class = nil if current_class and block_depth == current_class[:depth]
-      when :line_comment# :block_comment_start
+      when :line_comment, :block_comment_start
         comment = token[:tt]
       when :close_php
         in_php = false
