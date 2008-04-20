@@ -4,7 +4,7 @@ require "stringio"
 require File.dirname(__FILE__) + "/../lib/db"
 require File.dirname(__FILE__) + "/../lib/lexer"
 
-file_path = ARGV[0] || "/svn/pdc_flyerlink/branches/packages/Scripts/PageMaker/Pages/wm_orders_va_printouts_order_form.def"
+file_path = ARGV[0] || "/Sites/quotes/includes/adodb/adodb.inc.php"
 
 if file_path == '-'
   to_parse = STDIN
@@ -20,7 +20,7 @@ lexer = Lexer.new do |l|
   l.add_token :close_php,           /\?>/
   l.add_token :class,               /\b(?:class)\s*(?:\w+)(?:\s*extends\s*\w+)?(?=\s*\{)/
   l.add_token :property,            /\b(?:var|public|private|static)\s*\$\w+/
-  l.add_token :function,            /\b(?:function)\s+\w+\s*\(.*?\)(?=\s*\{)/m
+  l.add_token :function,            /\b(?:function)\s+&?\w+\s*\(.*?\)(?=\s*\{)/m
   l.add_token :string,              /"(?:\\.|[^"\\])*"/
   l.add_token :return,              /\breturn\b/
   l.add_token :nil,                 /\bnil\b/
@@ -89,7 +89,7 @@ tokenList.each do |token|
         in_php = false
       when :function
         # function_info = PHPFunction.new token.text
-        token.text =~ /function\s+(\w+)\s*\(/
+        token.text =~ /function\s+&?(\w+)\s*\(/
         abort "Function regexp failed for #{token.text}" unless $1
         name = $1
         abort token.text if $1 == 'if'
