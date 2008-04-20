@@ -94,7 +94,17 @@ end
 
 methods = []
 
-if line =~ /(\$\w+)->(\w*)/
+if line =~ /(\$\w+)->(\w*)$/
+  prefix = $2.to_s
+  variables_named($1).each do |variable|
+    functions_in_class_beginning_with(variable['class'], prefix).each do |method|
+      methods << method unless [variable['class'], '__construct'].include? method['name']
+    end
+  end
+  TextMate::exit_show_tool_tip "No methods found" if methods.empty?
+
+  methods = methods.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
+elsif line =~ /(\$\w+)::(\w*)$/
   prefix = $2.to_s
   variables_named($1).each do |variable|
     functions_in_class_beginning_with(variable['class'], prefix).each do |method|
@@ -115,17 +125,6 @@ else
   TextMate::exit_show_tool_tip "No functions found" if methods.empty?
 end
 
-if ENV['DIALOG'] !~ /2$/ or methods.size == 1
-  if methods.size == 1
-    choice = 0
-  else
-    abort unless choice = TextMate::UI.menu(methods.map { |m| m['name'] })
-  end
-  TextMate::exit_insert_snippet methods[choice]['name'][prefix.to_s.length..-1] + snippet_for_method(methods[choice])
-else
-  IO.popen("\"$DIALOG\" popup -c #{e_sh prefix} -e _ -i", 'w') do |io|
-    io << {'suggestions' => methods.map do |method|
-      {'title' => method['name'], 'snippet' => snippet_for_method(method)}
-    end}.to_plist
-  end
+TextMate::UI.complete(methods.map { |m| m.merge('display' => m['name']) }, :extra_chars => '_') do |method|
+  snippet_for_method(method)
 end
