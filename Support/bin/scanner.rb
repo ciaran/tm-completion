@@ -1,9 +1,8 @@
 #!/usr/bin/env ruby -wKU
 
 require File.dirname(__FILE__) + "/../lib/db"
-require ENV['TM_SUPPORT_PATH'] + '/lib/progress'
 
-ProjectPath = ARGV[0] + "/"
+ProjectPath = ARGV[0] + ((ARGV[0][-1] == ?/) ? '' : '/')
 DbPath      = ProjectPath + DatabaseFilename
 ParserPath  = File.dirname($0) + '/parser.rb'
 
@@ -43,6 +42,8 @@ if ARGV[1] # Single file
 
   puts "Done!"
 else
+  require ENV['TM_SUPPORT_PATH'] + '/lib/progress'
+
   files = Dir['**/*.php']
 
   TextMate.call_with_progress(:title =>'Scanning…', :summary => 'Scanning Project Files...', :indeterminate => false, :cancel => lambda {puts "Canceled!"; exit 0} ) do |dialog|
