@@ -1,8 +1,10 @@
 require "rexml/document"
 
-# escape text to make it useable in a shell script as one “word” (string)
-def e_sh(str)
-	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+unless defined?(e_sh)
+  # escape text to make it useable in a shell script as one “word” (string)
+  def e_sh(str)
+  	str.to_s.gsub(/(?=[^a-zA-Z0-9_.\/\-\x7F-\xFF\n])/, '\\').gsub(/\n/, "'\n'").sub(/^$/, "''")
+  end
 end
 
 DatabaseFilename = '.completion.db'

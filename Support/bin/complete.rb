@@ -1,12 +1,10 @@
 #!/usr/bin/env ruby -wKU
 
-#!/usr/bin/env ruby 
-
-require ENV['TM_BUNDLE_SUPPORT'] + '/lib/db'
-require ENV['TM_BUNDLE_SUPPORT'] + '/lib/php'
 require ENV['TM_SUPPORT_PATH'] + '/lib/ui'
 require ENV['TM_SUPPORT_PATH'] + '/lib/exit_codes'
 require ENV['TM_SUPPORT_PATH'] + '/lib/osx/plist'
+require ENV['TM_BUNDLE_SUPPORT'] + '/lib/db'
+require ENV['TM_BUNDLE_SUPPORT'] + '/lib/php'
 
 line = ENV['TM_CURRENT_LINE']
 line = line[0..ENV['TM_LINE_INDEX'].to_i - 1]
