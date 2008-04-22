@@ -101,12 +101,10 @@ if line =~ /(\$\w+)->(\w*)$/
   TextMate::exit_show_tool_tip "No methods found" if methods.empty?
 
   methods = methods.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
-elsif line =~ /(\$\w+)::(\w*)$/
+elsif line =~ /(\w+)::(\w*)$/
   prefix = $2.to_s
-  variables_named($1).each do |variable|
-    functions_in_class_beginning_with(variable['class'], prefix).each do |method|
-      methods << method unless [variable['class'], '__construct'].include? method['name']
-    end
+  functions_in_class_beginning_with($1, prefix).each do |method|
+    methods << method unless [$1, '__construct'].include? method['name']
   end
   TextMate::exit_show_tool_tip "No methods found" if methods.empty?
 
