@@ -46,6 +46,17 @@ def functions_beginning_with(prefix)
   functions
 end
 
+def classes_beginning_with(prefix)
+  classes = []
+  if ENV['TM_FILEPATH']
+    classes += run_query("SELECT * FROM classes WHERE name LIKE '#{prefix}%' AND file != '#{e_sql ENV['TM_FILEPATH'].project_relative_path}';")
+  end
+  if @current_file[:classes]
+    classes += @current_file[:classes].select { |c| c['name'].begins_with? prefix }
+  end
+  classes
+end
+
 def snippet_for_method(method)
   prototype = method['prototype']
 
@@ -117,9 +128,12 @@ else
   functions_beginning_with(prefix).each do |method|
     methods << method
   end
+  classes_beginning_with(prefix).each do |klass|
+    methods << klass
+  end
   TextMate::exit_show_tool_tip "No functions found" if methods.empty?
 end
 
 TextMate::UI.complete(methods.map { |m| m.merge('display' => m['name']) }, :extra_chars => '_') do |method|
-  snippet_for_method(method)
+  snippet_for_method(method) if method.has_key?('prototype')
 end
