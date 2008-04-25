@@ -11,9 +11,9 @@ line = line[0..ENV['TM_LINE_INDEX'].to_i - 1]
 
 ProjectPath = ENV['TM_PROJECT_DIRECTORY']
 DbPath      = ProjectPath + '/' + DatabaseFilename rescue nil
-ParserPath  = ENV['TM_BUNDLE_SUPPORT'] + '/bin/parser.rb'
+ParserPath  = ENV['TM_BUNDLE_SUPPORT'] + '/bin/parsers/'
 
-@current_file = parse_stdin
+@current_file = parse_stdin 'php'
 
 def variables_named(name)
   vars = []

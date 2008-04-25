@@ -4,7 +4,7 @@ require File.dirname(__FILE__) + "/../lib/db"
 
 ProjectPath = ARGV[0] + ((ARGV[0][-1] == ?/) ? '' : '/')
 DbPath      = ProjectPath + DatabaseFilename
-ParserPath  = File.dirname($0) + '/parser.rb'
+ParserPath  = File.dirname($0) + '/parsers/'
 
 def update_database(path, items)
   # Functions
@@ -36,21 +36,34 @@ create_schema unless database_exists?
 
 Dir.chdir ProjectPath
 
+@language_associations = {
+  'php' => [/\.php$/, /\.inc$/],
+}
+
+def language_for(file)
+  @language_associations.each_pair do |name, patterns|
+    return name if patterns.find { |p| file =~ p }
+  end
+  nil
+end
+
 if ARGV[1] # Single file
   file_path = ARGV[1].project_relative_path
-  update_database file_path, parse_file(file_path)
-
-  puts "Done!"
+  if language = language_for(file_path)
+    update_database file_path, parse_file(file_path, language)
+    puts "Done!"
+  else
+    puts "Unknown file type"
+  end
 else
   require ENV['TM_SUPPORT_PATH'] + '/lib/progress'
 
-  files = Dir['**/*.php']
+  files = Dir['**/*']
 
   TextMate.call_with_progress(:title =>'Scanning…', :summary => 'Scanning Project Files...', :indeterminate => false, :cancel => lambda {puts "Canceled!"; exit 0} ) do |dialog|
     step = 100.0 / files.size.to_f
     progress = 0
     files.each do |script|
-      next if script =~ /phpMyAdmin|adodb|tpl.php$/
       dialog.parameters = {'summary' => "Parsing #{script}", 'progressValue' => progress}
       update_database script, parse_file(script)
       progress += step

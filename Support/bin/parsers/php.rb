@@ -1,8 +1,8 @@
 #!/usr/bin/ruby -wKU
 
 require "stringio"
-require File.dirname(__FILE__) + "/../lib/db"
-require File.dirname(__FILE__) + "/../lib/lexer"
+require File.dirname(__FILE__) + "/../../lib/db"
+require File.dirname(__FILE__) + "/../../lib/lexer"
 
 file_path = ARGV[0] || "/Sites/quotes/includes/init.php"
 
