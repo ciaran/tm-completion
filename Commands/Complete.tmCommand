@@ -16,8 +16,6 @@
 	<string>Complete</string>
 	<key>output</key>
 	<string>showAsTooltip</string>
-	<key>scope</key>
-	<string>source.php</string>
 	<key>uuid</key>
 	<string>53BEA681-F9F3-49CA-AF3A-1FDB8B046B6E</string>
 </dict>

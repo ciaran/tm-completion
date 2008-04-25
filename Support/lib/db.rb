@@ -49,7 +49,7 @@ def run_query(sql)
 end
 
 def parse_stdin(language)
-  IO.popen("ruby #{e_sh ParserPath + "/" + language + ".rb"} -", "w+") do |io|
+  IO.popen("ruby #{e_sh ParserPath + language + ".rb"} -", "w+") do |io|
     io << STDIN.read
     io.close_write
     parse_xml io.read
@@ -57,7 +57,7 @@ def parse_stdin(language)
 end
 
 def parse_file(path, language)
-  parse_xml %x{ruby #{e_sh ParserPath + "/" + language + ".rb"} #{e_sh path}}
+  parse_xml %x{ruby #{e_sh ParserPath + language + ".rb"} #{e_sh path}}
 end
 
 class String
