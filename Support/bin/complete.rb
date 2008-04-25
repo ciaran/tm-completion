@@ -100,40 +100,38 @@ def snippet_for_method(method)
   snippet + ')$0'
 end
 
-methods = []
+choices = []
 
 if line =~ /(\$\w+)->(\w*)$/
   prefix = $2.to_s
   variables_named($1).each do |variable|
     functions_in_class_beginning_with(variable['class'], prefix).each do |method|
-      methods << method unless [variable['class'], '__construct'].include? method['name']
+      choices << method unless [variable['class'], '__construct'].include? method['name']
     end
   end
-  TextMate::exit_show_tool_tip "No methods found" if methods.empty?
-
-  methods = methods.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
+  TextMate::exit_show_tool_tip "No methods found" if choices.empty?
 elsif line =~ /(\w+)::(\w*)$/
   prefix = $2.to_s
   functions_in_class_beginning_with($1, prefix).each do |method|
-    methods << method unless [$1, '__construct'].include? method['name']
+    choices << method unless [$1, '__construct'].include? method['name']
   end
-  TextMate::exit_show_tool_tip "No methods found" if methods.empty?
-
-  methods = methods.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
+  TextMate::exit_show_tool_tip "No classes found" if choices.empty?
 else
   line = line[0..ENV['TM_LINE_INDEX'].to_i]
   line =~ /\b(\w*)$/
   prefix = $1.to_s
 
   functions_beginning_with(prefix).each do |method|
-    methods << method
+    choices << method
   end
   classes_beginning_with(prefix).each do |klass|
-    methods << klass
+    choices << klass
   end
-  TextMate::exit_show_tool_tip "No functions found" if methods.empty?
+  TextMate::exit_show_tool_tip "No functions or classes found" if choices.empty?
 end
 
-TextMate::UI.complete(methods.map { |m| m.merge('display' => m['name']) }, :extra_chars => '_') do |method|
+choices = choices.inject([]) { |methods, m| methods << m unless methods.include? m; methods }.sort_by { |m| m['name'].downcase }
+
+TextMate::UI.complete(choices.map { |m| m.merge('display' => m['name']) }, :extra_chars => '_') do |method|
   snippet_for_method(method) if method.has_key?('prototype')
 end
