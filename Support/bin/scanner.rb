@@ -38,6 +38,7 @@ Dir.chdir ProjectPath
 
 @language_associations = {
   'php' => [/\.php$/, /\.inc$/],
+  'ruby' => [/\.rb$/],
 }
 
 def language_for(file)
@@ -64,8 +65,10 @@ else
     step = 100.0 / files.size.to_f
     progress = 0
     files.each do |script|
-      dialog.parameters = {'summary' => "Parsing #{script}", 'progressValue' => progress}
-      update_database script, parse_file(script)
+      if language = language_for(script)
+        dialog.parameters = {'summary' => "Parsing #{script}", 'progressValue' => progress}
+        update_database script, parse_file(script, language)
+      end
       progress += step
     end
   end
